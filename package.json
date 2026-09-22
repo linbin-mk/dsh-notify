@@ -17,6 +17,7 @@
     "native/dsh-notify-menubar",
     "native/whale.svg",
     "README.md",
+    "README.en.md",
     "LICENSE",
     "NOTICE"
   ],
@@ -50,6 +51,17 @@
     "@deepseek-ai/schemastery": "^3.18.2"
   },
   "author": "linbin-mk (https://github.com/linbin-mk)",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "deepseek-harness",
+    "cordis",
+    "macos",
+    "menubar",
+    "notifications",
+    "notify"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/linbin-mk/dsh-notify.git"
