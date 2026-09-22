@@ -79,11 +79,12 @@ The build compiles the AppKit helper for `arm64` and `x86_64`, then combines bot
 
 ## Troubleshooting
 
+- **Before 0.2.2: the Web GUI shows `Failed to load plugins` and does not start.** Versions `0.2.0` and `0.2.1` register the client bundle under the short name `dsh-notify`, while Harness keys the client module table by **package name** (`@linbin-mk/dsh-notify`); the mismatch aborts the whole browser boot. The Host half and the menu bar keep working, so `--dump-config` looks fine. Fixed in `0.2.2`; upgrade, or remove the plugin meanwhile.
 - **`dsh plugin add` reports 404 right after a release.** A brand-new version takes a few minutes to appear on the registry read path; the tarball, `dist-tags`, and the search index usually resolve first. Retry shortly.
 - **Installing through a mirror fails with `ERR_PNPM_FETCH_404`.** Mirrors such as npmmirror sync new versions on their own schedule. Add `--registry=https://registry.npmjs.org` to that one command, or wait for the mirror.
 - **pnpm refuses or prompts for a just-released version.** That is pnpm's `minimumReleaseAge` delay. Allow the package (pnpm records it under `minimumReleaseAgeExclude`) or wait out the window.
 - **Clicking the item does not bring Chrome forward.** The helper only focuses a tab that is already open on this Harness origin, and it never opens one; `no open Chrome tab matches the Harness Web client` on stderr means nothing matched. macOS also gates control of other applications behind Automation permission, so a denied prompt leaves the count working while focus stays silent.
-- **The status item never appears.** Check that the plugin row survived install:
+- **The status item never appears.** Check that the plugin row survived install (this covers the Host half only; client-half failures surface in the browser console):
 
   ```sh
   dsh --profile web-notify --dump-config | grep -A 2 notify-menubar

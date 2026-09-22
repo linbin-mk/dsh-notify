@@ -182,13 +182,16 @@ test('the client bundle registers localized event subscription checkboxes and a 
   }
   const clientPath = fileURLToPath(new URL('../client.js', import.meta.url))
   const source = await readFile(clientPath, 'utf8')
+  const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
   let bundle
   const context = vm.createContext({
     window: { __ModuleLoader__: { load: value => { bundle = value } } },
     Promise,
   })
   vm.runInContext(source, context)
-  assert.equal(bundle.id, 'dsh-notify')
+  // Harness keys the client module table by entry name, which is the package
+  // name; a stale id here only surfaces in the browser, at boot time.
+  assert.equal(bundle.id, manifest.name)
 
   const jsx = (type, props) => ({ type, props })
   const plugin = bundle.factory(specifier => {

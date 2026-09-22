@@ -79,11 +79,12 @@ file native/dsh-notify-menubar
 
 ## 常见问题
 
+- **0.2.2 之前：Web GUI 启动失败，页面显示 `Failed to load plugins`。** `0.2.0` 与 `0.2.1` 把客户端 bundle 注册成了短名 `dsh-notify`，而 Harness 按**包名**（`@linbin-mk/dsh-notify`）索引客户端模块表，两者不一致会让浏览器侧整个 GUI 起不来——Host 半侧与菜单栏此时仍然正常，所以 `--dump-config` 看起来没问题。已在 `0.2.2` 修复；升级即可，或先移除插件。
 - **刚发版后 `dsh plugin add` 报 404。** 全新版本在 registry 读路径上需要几分钟才可见；tarball、`dist-tags` 和搜索索引通常会先可用。稍后重试即可。
 - **通过镜像安装报 `ERR_PNPM_FETCH_404`。** npmmirror 等镜像同步新版本有自己的节奏。给这条命令加上 `--registry=https://registry.npmjs.org`，或等镜像同步。
 - **pnpm 拒绝或询问刚发布的版本。** 这是 pnpm 的 `minimumReleaseAge` 延迟保护。放行该包（pnpm 会记录到 `minimumReleaseAgeExclude`）或等过这个时间窗口。
 - **点击状态项没有切到 Chrome。** 辅助程序只会切换到**已打开**此 Harness 源的标签页，且绝不会新建标签页；stderr 出现 `no open Chrome tab matches the Harness Web client` 说明没有匹配的标签页。此外 macOS 对控制其他应用有“自动化”权限限制，权限被拒时计数仍正常，只是点击静默无效。
-- **状态项根本不出现。** 先确认安装后插件行还在：
+- **状态项根本不出现。** 先确认安装后插件行还在（这条只覆盖 Host 半侧；客户端半侧的失败只在浏览器控制台里暴露）：
 
   ```sh
   dsh --profile web-notify --dump-config | grep -A 2 notify-menubar

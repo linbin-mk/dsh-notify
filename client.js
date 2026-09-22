@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'dsh-notify',
+  id: '@linbin-mk/dsh-notify',
   factory: (require) => {
     const module = { exports: {} }
     const exports = module.exports
