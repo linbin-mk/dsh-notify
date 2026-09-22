@@ -4,13 +4,17 @@ import { fileURLToPath } from 'node:url'
 import z from '@deepseek-ai/schemastery'
 
 export const name = 'dsh-notify'
-export const inject = ['agents', 'settings', 'webServer']
+export const inject = ['agents', 'webServer']
 
+/** Profile entry id from `cordis.patch.yml`; it names this plugin's settings form. */
+export const ENTRY_ID = 'notify-menubar'
+
+/** Live fields of the menu bar indicator; every one is editable without a restart. */
 export const Config = z.object({
-  enabled: z.boolean().default(true),
-  questionMarkers: z.boolean().default(true),
-  approvalMarkers: z.boolean().default(true),
-  sweep: z.boolean().default(true),
+  enabled: z.boolean().default(true).volatile(),
+  questionMarkers: z.boolean().default(true).volatile(),
+  approvalMarkers: z.boolean().default(true).volatile(),
+  sweep: z.boolean().default(true).volatile(),
 })
 
 const helperPath = fileURLToPath(new URL('./native/dsh-notify-menubar', import.meta.url))
@@ -231,20 +235,32 @@ export class MenuBarIndicator {
   }
 }
 
+/** Push every live Config reference into the running indicator. */
+export function publishLiveConfig(indicator, config) {
+  indicator.setQuestionMarkers(config.questionMarkers.get())
+  indicator.setApprovalMarkers(config.approvalMarkers.get())
+  indicator.setSweepEnabled(config.sweep.get())
+  indicator.setEnabled(config.enabled.get())
+}
+
 /** Mount the configurable macOS menu bar indicator for this Harness process. */
-export function apply(ctx, config = { enabled: true }) {
-  const settings = ctx.settings.register('dsh-notify', Config, { base: config })
+export function apply(ctx, config) {
+  // The browser half ships its own Settings page, so the automatically
+  // generated config page must not offer the same four fields twice.
+  ctx.inject(['settings'], (child) => {
+    child.effect(() => child.settings.configure({ auto: false }, ctx.fiber))
+  })
   ctx.effect(() => {
-    const current = settings.get()
-    const indicator = new MenuBarIndicator(ctx.logger, current.enabled, webClientOrigin(ctx), launchMenuBarHelper, current)
+    const indicator = new MenuBarIndicator(ctx.logger, config.enabled.get(), webClientOrigin(ctx), launchMenuBarHelper, {
+      questionMarkers: config.questionMarkers.get(),
+      approvalMarkers: config.approvalMarkers.get(),
+      sweep: config.sweep.get(),
+    })
     const stopObserving = observeRunningAgents(ctx, count => { indicator.setCount(count) })
     const stopInteractions = observePendingInteractions(ctx, counts => { indicator.setMarkerCounts(counts) })
-    const stopWatching = settings.watch(next => {
-      indicator.setQuestionMarkers(next.questionMarkers)
-      indicator.setApprovalMarkers(next.approvalMarkers)
-      indicator.setSweepEnabled(next.sweep)
-      indicator.setEnabled(next.enabled)
-    })
+    // Volatile-only config edits are committed into these references and
+    // announced on the owning fiber instead of remounting the plugin.
+    const stopWatching = ctx.on('loader/volatile-update', () => { publishLiveConfig(indicator, config) })
     return async () => {
       stopWatching()
       stopInteractions()

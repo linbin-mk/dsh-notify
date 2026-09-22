@@ -84,7 +84,9 @@ window.__ModuleLoader__.load({
 
     function statusText(snapshot, enabled, t) {
       if (snapshot.status === 'loading') return t('loading')
-      if (snapshot.status !== 'ready') return t('unavailable')
+      // Memory mode keeps a remote browser's writes process-local, so it must
+      // not present the form as a persisted setting.
+      if (snapshot.status !== 'ready' || snapshot.mode === 'memory') return t('unavailable')
       if (!snapshot.writable) return t('readOnly')
       return enabled ? t('enabled') : t('disabled')
     }
@@ -156,7 +158,8 @@ window.__ModuleLoader__.load({
       const approvalMarkers = snapshot.value?.approvalMarkers !== false
       const sweep = snapshot.value?.sweep !== false
       const [saving, setSaving] = React.useState(false)
-      const disabled = saving || snapshot.status !== 'ready' || !snapshot.writable
+      const editable = snapshot.status === 'ready' && snapshot.writable && snapshot.mode === 'host'
+      const disabled = saving || !editable
       const save = update => {
         if (disabled) return
         setSaving(true)
@@ -185,24 +188,16 @@ window.__ModuleLoader__.load({
       })
     }
 
-    const inject = ['slots', 'locale', 'connection', 'settingsScope']
+    // Profile entry id from this package's cordis.patch.yml; the Host half's
+    // Config is the form this page reads and writes.
+    const ENTRY_ID = 'notify-menubar'
+
+    const inject = ['slots', 'locale', 'connection', 'configForms']
 
     function apply(ctx) {
       const namespace = 'settings.dshNotify'
       const t = ctx.locale.bind(namespace)
-      const scope = ctx.settingsScope.bind({
-        namespace: 'dsh-notify',
-        decode: section => section !== null
-          && typeof section === 'object'
-          && typeof section.enabled === 'boolean'
-          ? {
-            enabled: section.enabled,
-            questionMarkers: section.questionMarkers !== false,
-            approvalMarkers: section.approvalMarkers !== false,
-            sweep: section.sweep !== false,
-          }
-          : undefined,
-      })
+      const form = ctx.configForms.get(ENTRY_ID)
       ctx.effect(
         () => ctx.locale.register(namespace, dictionaries),
         'dsh-notify: settings dictionaries',
@@ -214,11 +209,11 @@ window.__ModuleLoader__.load({
         label: () => t('nav'),
         locale: namespace,
         inject: () => ({
-          hooks: { notifySettings: scope },
-          setEnabled: enabled => scope.set('enabled', enabled),
-          setQuestionMarkers: enabled => scope.set('questionMarkers', enabled),
-          setApprovalMarkers: enabled => scope.set('approvalMarkers', enabled),
-          setSweep: enabled => scope.set('sweep', enabled),
+          hooks: { notifySettings: form },
+          setEnabled: enabled => form.set('enabled', enabled),
+          setQuestionMarkers: enabled => form.set('questionMarkers', enabled),
+          setApprovalMarkers: enabled => form.set('approvalMarkers', enabled),
+          setSweep: enabled => form.set('sweep', enabled),
         }),
       }, NotifySettingsSection))
     }

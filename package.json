@@ -48,7 +48,7 @@
     }
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.2"
+    "@deepseek-ai/schemastery": "^3.18.3"
   },
   "author": "linbin-mk (https://github.com/linbin-mk)",
   "keywords": [

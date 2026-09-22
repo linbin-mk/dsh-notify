@@ -22,7 +22,7 @@
 
 - Apple 芯片或 Intel 处理器的 macOS 13 或更高版本
 - Node.js `^22.19` 或 `>=24`
-- DeepSeek Harness `0.1.5-rc.1` 或兼容的 `0.1.5` 预发布版本，以及提供 `ctx.agents`、`ctx.settings` 和 `ctx.webServer` 的 Web profile
+- DeepSeek Harness `0.1.7-alpha.1` 或兼容版本，以及提供 `ctx.agents`、`ctx.webServer` 和设置服务的 Web profile
 - 从本检出目录构建时需要 Xcode Command Line Tools；打包产物已包含通用原生辅助程序
 
 ## 安装
@@ -53,7 +53,7 @@ dsh plugin --profile web-notify remove @linbin-mk/dsh-notify
 
 ## 设置
 
-Host 插件注册 `dsh-notify` 设置命名空间。四个字段默认均为 `true`，并通过 Harness 带修订保护的设置传输写入，因此修改会立即生效，无需重启 Harness。
+Host 半侧在自己的 Cordis `Config` 中声明这四个字段，并全部标记为可实时编辑（`.volatile()`）；profile 中的插件行 id `notify-menubar` 就是它的设置命名空间。浏览器半侧的内置设置页通过这些字段读写：写入经 Harness 带修订保护的设置传输落到当前 profile 的 Cordis patch，只改这些字段时 Harness 会把新值提交进正在运行的引用而不重挂插件，因此修改会立即生效，无需重启 Harness。
 
 | 设置 | 默认值 | 作用 |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ npm test
 file native/dsh-notify-menubar
 ```
 
-构建过程会分别为 `arm64` 和 `x86_64` 编译 AppKit 辅助程序，再将两个架构合并为一个通用可执行文件。测试覆盖 Agent 计数、运行期间的启用和停用行为、Client 插件的设置注册与开关行为，以及加载随包提供的鲸鱼 SVG 且不创建状态项的 AppKit 探测。
+构建过程会分别为 `arm64` 和 `x86_64` 编译 AppKit 辅助程序，再将两个架构合并为一个通用可执行文件。测试覆盖 Agent 计数、运行期间的启用和停用行为、Host 半侧实时配置引用与 `loader/volatile-update` 的联动、Client 插件经 `ctx.configForms` 读取配置并写回开关，以及加载随包提供的鲸鱼 SVG 且不创建状态项的 AppKit 探测。
 
 ## 常见问题
 

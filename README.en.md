@@ -22,7 +22,7 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 
 - macOS 13 or later, on Apple silicon or Intel
 - Node.js `^22.19` or `>=24`
-- DeepSeek Harness `0.1.5-rc.1` or a compatible `0.1.5` prerelease, with a Web profile that provides `ctx.agents`, `ctx.settings`, and `ctx.webServer`
+- DeepSeek Harness `0.1.7-alpha.1` or a compatible release, with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
 - Xcode Command Line Tools when building from this checkout; packed artifacts contain the universal native helper
 
 ## Install
@@ -53,7 +53,7 @@ dsh plugin --profile web-notify remove @linbin-mk/dsh-notify
 
 ## Settings
 
-The Host plugin registers the `dsh-notify` settings namespace. All four fields default to `true` and are written through Harness's revision-fenced settings transport, so changes apply immediately without restarting Harness.
+The Host half declares the four fields in its Cordis `Config` and marks every one live-editable (`.volatile()`); the profile entry id `notify-menubar` is their settings namespace. The built-in Settings page in the browser half reads and writes those fields: a write goes through Harness's revision-fenced settings transport into the active profile's Cordis patch, and a change confined to these fields is committed into the running references without remounting the plugin, so it applies immediately without restarting Harness.
 
 | Setting | Default | Effect |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ npm test
 file native/dsh-notify-menubar
 ```
 
-The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. The tests cover Agent counting, live enable/disable ownership, the Client bundle's settings registration and switch behavior, and an AppKit probe that loads the packaged whale SVG without creating a status item.
+The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. The tests cover Agent counting, live enable/disable ownership, the Host half's volatile Config references and their `loader/volatile-update` follow-up, the Client bundle's reads and switch writes through `ctx.configForms`, and an AppKit probe that loads the packaged whale SVG without creating a status item.
 
 ## Troubleshooting
 
