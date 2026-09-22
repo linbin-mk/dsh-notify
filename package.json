@@ -1,0 +1,66 @@
+{
+  "name": "@linbin-mk/dsh-notify",
+  "version": "0.2.0",
+  "description": "Third-party macOS menu bar activity indicator for DeepSeek Harness",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "native/dsh-notify-menubar",
+    "native/whale.svg",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": "^22.19 || >=24"
+  },
+  "scripts": {
+    "build:native": "sh scripts/build-native.sh",
+    "prepare": "npm run build:native",
+    "test": "npm run build:native && node --test"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-api-remotes"
+      ]
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.2"
+  },
+  "author": "linbin-mk (https://github.com/linbin-mk)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linbin-mk/dsh-notify.git"
+  },
+  "homepage": "https://github.com/linbin-mk/dsh-notify#readme",
+  "bugs": {
+    "url": "https://github.com/linbin-mk/dsh-notify/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "license": "MIT"
+}

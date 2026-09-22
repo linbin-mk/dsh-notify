@@ -1,0 +1,4 @@
+.DS_Store
+.native-build/
+node_modules/
+*.tgz
