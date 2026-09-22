@@ -1,0 +1,99 @@
+# Publish @linbin-mk/dsh-notify to npm from a GitHub Release.
+#
+# Authentication uses npm trusted publishing (OIDC), so no NPM_TOKEN secret is
+# stored in this repository. The connection is configured once on npm:
+#
+#   Package → Settings → Trusted Publisher → GitHub Actions
+#     Organization or user : linbin-mk
+#     Repository           : dsh-notify
+#     Workflow filename    : publish.yml
+#     Environment          : (leave empty)
+#
+# Releasing: bump "version" in package.json, commit, tag `v<version>`, push the
+# tag, then publish a GitHub Release for that tag. The tag must agree with
+# package.json, and a version that is already on the registry is skipped — so a
+# manual `workflow_dispatch` run is a safe rehearsal that only installs and
+# tests.
+
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # The packaged helper is an AppKit executable and the test suite probes it,
+    # so this cannot run on Linux.
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      id-token: write # Required for npm trusted publishing and provenance.
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Require npm 11.5.1 or later for trusted publishing
+        run: |
+          node -e '
+            const { execSync } = require("node:child_process")
+            const version = execSync("npm --version").toString().trim()
+            console.log(`npm ${version}`)
+            const [major, minor] = version.split(".").map(Number)
+            if (major < 11 || (major === 11 && minor < 5)) {
+              console.error("npm 11.5.1 or later is required for trusted publishing")
+              process.exit(1)
+            }
+          '
+
+      # --ignore-scripts keeps the committed universal helper untouched, so the
+      # published tarball stays byte-identical to the tagged source tree.
+      - run: npm ci --ignore-scripts
+
+      # The suite runs the packaged helper, so it validates the exact binary
+      # that would be published.
+      - run: node --test
+
+      - name: Check the release tag against package.json
+        if: ${{ github.event_name == 'release' }}
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node -e '
+            const { version } = require("./package.json")
+            const tag = process.env.RELEASE_TAG
+            if (tag !== `v${version}`) {
+              console.error(`release tag ${tag} does not match package.json ${version}`)
+              process.exit(1)
+            }
+            console.log(`release tag ${tag} matches package.json`)
+          '
+
+      - name: Check whether this version is already published
+        id: registry
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@linbin-mk/dsh-notify@$version" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "@linbin-mk/dsh-notify@$version is already on the registry — nothing to publish"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: ${{ github.event_name == 'release' && steps.registry.outputs.published == 'false' }}
+        run: npm publish --ignore-scripts --provenance --access public
