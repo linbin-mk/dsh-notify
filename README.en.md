@@ -14,7 +14,7 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 
 - **Live session count** — the whale mark followed by the number of Agents whose authoritative status is `running`, and nothing but the whale when that number is zero.
 - **Pending event markers** — the number switches to the total of subscribed events awaiting user action, with `Q` per pending question and `S` per pending approval.
-- **Sweeping attention effect** — a highlight sweeps across the status item while a subscribed event is pending.
+- **Sweeping attention effect** — a highlight sweeps over the whale mark and the numbers while a subscribed event is pending. It is clipped to the icon and the glyphs instead of covering the whole status item.
 - **Click to focus** — clicking the item brings the Google Chrome tab already showing this Harness process to the front. It never opens a new tab.
 - **Settings without a restart** — the indicator, both subscriptions, and the sweep can be toggled live from the built-in Settings panel.
 
@@ -40,7 +40,7 @@ To install a locally built tarball instead:
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.4.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.4.1.tgz
 ```
 
 Either artifact already contains the universal native helper, so no Xcode installation is needed. Installing from a Git checkout does need Xcode Command Line Tools: pnpm runs the package's `prepare` script, which compiles that helper, and blocks it until the key it prints is allowlisted under `allowBuilds` in the profile's `pnpm-workspace.yaml`.
@@ -60,7 +60,7 @@ The Host half declares the four fields in its Cordis `Config` and marks every on
 | `enabled` | `true` | Show the menu bar status item. Turning it off closes the native helper and awaits its exit. |
 | `questionMarkers` | `true` | Count pending user questions and add a `Q` for each one. |
 | `approvalMarkers` | `true` | Count pending approvals and add an `S` for each one. |
-| `sweep` | `true` | Sweep the status item while a subscribed event is pending. |
+| `sweep` | `true` | Sweep the whale mark and the numbers while a subscribed event is pending. |
 
 While at least one marker letter is visible, the number reports the subscribed pending events instead of the session count. Turning both subscriptions off restores the plain session count, and sweep then has nothing to animate.
 

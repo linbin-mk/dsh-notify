@@ -14,7 +14,7 @@
 
 - **实时会话计数** —— 鲸鱼标志后跟随状态为 `running` 的 Agent 数量；数量为零时只显示鲸鱼。
 - **待处理事件标记** —— 数字切换为等待用户处理的已订阅事件总数，每个待处理提问计一个 `Q`，每个待处理审批计一个 `S`。
-- **扫光强化提示** —— 有已订阅事件等待处理时，状态项上会有一道扫光掠过。
+- **扫光强化提示** —— 有已订阅事件等待处理时，一道扫光会掠过鲸鱼图标和旁边的数字；高光只落在图标与字形上，不会铺满整个状态项。
 - **点击聚焦** —— 点击状态项会把已打开此 Harness 进程的 Google Chrome 标签页切到前台，绝不会新建标签页。
 - **免重启改设置** —— 状态项、两类订阅和扫光都可在内置设置面板中实时开关。
 
@@ -40,7 +40,7 @@ dsh --profile web-notify
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.4.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.4.1.tgz
 ```
 
 两种产物都已包含通用原生辅助程序，无需安装 Xcode。如果改为从 Git 检出安装，则需要 Xcode Command Line Tools：pnpm 会运行包的 `prepare` 脚本编译该辅助程序并阻止执行，直到你把 pnpm 打印的那个键加入 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
@@ -60,7 +60,7 @@ Host 半侧在自己的 Cordis `Config` 中声明这四个字段，并全部标�
 | `enabled` | `true` | 是否显示菜单栏状态项。关闭后会关闭原生辅助程序并等待其退出。 |
 | `questionMarkers` | `true` | 统计待处理提问，每个提问对应一个 `Q`。 |
 | `approvalMarkers` | `true` | 统计待处理审批，每个审批对应一个 `S`。 |
-| `sweep` | `true` | 有已订阅事件等待处理时，为状态项添加扫光效果。 |
+| `sweep` | `true` | 有已订阅事件等待处理时，为鲸鱼图标和旁边的数字添加扫光效果。 |
 
 只要有标记字母显示，数字就表示已订阅的待处理事件数，而不再是会话数。把两类订阅都关闭后，数字恢复为会话数，扫光也就没有可播放的对象了。
 

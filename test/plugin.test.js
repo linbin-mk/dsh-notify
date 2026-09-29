@@ -431,6 +431,7 @@ test('the universal native helper loads the whale and hides a zero count', async
     markerCommand: 'markers',
     markerTitle: '2-QSS',
     markerWireValue: 'QS',
+    sweepClippedToContent: true,
     sweepWireValue: false,
     chromeFocusScriptValid: true,
     iconLoaded: true,
