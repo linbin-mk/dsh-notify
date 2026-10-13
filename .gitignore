@@ -2,3 +2,6 @@
 .native-build/
 node_modules/
 *.tgz
+
+# Local E2E scratch (isolated DSH_HOME)
+.e2e/

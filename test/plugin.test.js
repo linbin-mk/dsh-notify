@@ -51,7 +51,8 @@ function fakeHostContext(agents = []) {
   const policies = []
   const ctx = {
     agents: { list: () => agents },
-    webServer: { port: 3080 },
+    webServer: { protocol: 'http:', host: '127.0.0.1', port: 3080 },
+    get: () => undefined,
     logger: { warn() {} },
     fiber: { name: 'dsh-notify' },
     on(name, listener) {
@@ -213,8 +214,22 @@ test('the helper receives the active Harness Web origin before count updates', a
   ])
 })
 
-test('builds the origin for the active loopback Web server', () => {
-  assert.equal(webClientOrigin({ webServer: { port: 3080 } }), 'http://127.0.0.1:3080')
+test('builds the origin from the bound listener, bracketing IPv6 and honouring TLS', () => {
+  const origin = (webServer, webStartup) => webClientOrigin({ webServer, get: () => webStartup })
+  const listener = (host, protocol = 'http:') => ({ protocol, host, port: 3080 })
+  assert.equal(origin(listener('127.0.0.1')), 'http://127.0.0.1:3080')
+  assert.equal(origin(listener('127.0.0.1', 'https:')), 'https://127.0.0.1:3080')
+  assert.equal(origin(listener('192.168.1.5')), 'http://192.168.1.5:3080')
+  assert.equal(origin(listener('::1')), 'http://[::1]:3080')
+  assert.equal(origin(listener('fe80::1%en0')), 'http://[fe80::1]:3080')
+})
+
+test('an advertised Web root wins over the bind address', () => {
+  const ctx = {
+    webServer: { protocol: 'http:', host: '127.0.0.1', port: 3080 },
+    get: () => ({ publicUrl: 'https://dsh.example.com/' }),
+  }
+  assert.equal(webClientOrigin(ctx), 'https://dsh.example.com/')
 })
 
 test('the Host Config exposes every field as a live reference defaulting to true', () => {
@@ -350,6 +365,30 @@ test('the browser half addresses the entry id declared by the bundle patch', asy
   assert.match(patch, new RegExp(`^\\s*(?:-\\s*)?id: ${ENTRY_ID}$`, 'm'))
   const source = await readFile(fileURLToPath(new URL('../client.js', import.meta.url)), 'utf8')
   assert.ok(source.includes(`'${ENTRY_ID}'`), 'the client bundle names the same settings entry id')
+})
+
+test('the injected stylesheet is tagged with the package name Harness keys ownership by', async () => {
+  const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+  const injected = []
+  const document = {
+    querySelector: () => null,
+    createElement: () => ({ dataset: {}, textContent: '' }),
+    head: { appendChild: element => { injected.push(element) } },
+  }
+  const source = await readFile(fileURLToPath(new URL('../client.js', import.meta.url)), 'utf8')
+  let bundle
+  const context = vm.createContext({ window: { __ModuleLoader__: { load: value => { bundle = value } } }, Promise, document })
+  vm.runInContext(source, context)
+  bundle.factory(specifier => {
+    if (specifier === 'react/jsx-runtime') return { jsx: () => {}, jsxs: () => {} }
+    if (specifier === 'react') return {}
+    throw new Error(`unexpected module request: ${specifier}`)
+  })
+  assert.equal(injected.length, 1)
+  // A short name here leaves the tag unowned, so it survives plugin unload and
+  // HMR can never replace it; Harness keys ownership by the package name.
+  assert.equal(injected[0].dataset.plugin, manifest.name)
+  assert.equal(injected[0].dataset.pluginCss, `${manifest.name}/client.css`)
 })
 
 test('the client bundle registers localized event subscription checkboxes and a sweep switch', async () => {

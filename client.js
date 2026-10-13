@@ -7,10 +7,12 @@ window.__ModuleLoader__.load({
     const { jsx, jsxs } = require('react/jsx-runtime')
     const React = require('react')
 
-    const styleId = 'dsh-notify/client.css'
+    // Harness keys injected style ownership by package name, exactly as it keys
+    // the client module table; a short name here would leave the tag unowned.
+    const styleId = '@linbin-mk/dsh-notify/client.css'
     if (typeof document !== 'undefined' && document.querySelector(`style[data-plugin-css=${JSON.stringify(styleId)}]`) === null) {
       const tag = document.createElement('style')
-      tag.dataset.plugin = 'dsh-notify'
+      tag.dataset.plugin = '@linbin-mk/dsh-notify'
       tag.dataset.pluginCss = styleId
       tag.textContent = `
         .dshNotifySection{box-sizing:border-box;max-width:720px;color:var(--dsw-alias-label-primary);display:flex;flex-direction:column;gap:16px}

@@ -22,7 +22,7 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 
 - macOS 13 or later, on Apple silicon or Intel
 - Node.js `^22.19` or `>=24`
-- DeepSeek Harness `0.1.7-rc.2` or a compatible release, with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
+- DeepSeek Harness `0.2.1-alpha.2` or a compatible release, with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
 - Xcode Command Line Tools when building from this checkout; packed artifacts contain the universal native helper
 
 ## Install
@@ -75,11 +75,12 @@ npm test
 file native/dsh-notify-menubar
 ```
 
-The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. The tests cover Agent counting, live enable/disable ownership, the Host half's volatile Config references and their `loader/volatile-update` follow-up, the Client bundle's reads and switch writes through `ctx.configForms`, and an AppKit probe that loads the packaged whale SVG without creating a status item.
+The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. The tests cover Agent counting, live enable/disable ownership, the Host half's volatile Config references and their `loader/volatile-update` follow-up, Web origin composition from the listener protocol and bind address (IPv6 bracketed) with an advertised root taking precedence, the Client bundle's reads and switch writes through `ctx.configForms`, the package-name ownership of its injected stylesheet, and an AppKit probe that loads the packaged whale SVG without creating a status item.
 
 ## Troubleshooting
 
 - **Before 0.2.2: the Web GUI shows `Failed to load plugins` and does not start.** Versions `0.2.0` and `0.2.1` register the client bundle under the short name `dsh-notify`, while Harness keys the client module table by **package name** (`@linbin-mk/dsh-notify`); the mismatch aborts the whole browser boot. The Host half and the menu bar keep working, so `--dump-config` looks fine. Fixed in `0.2.2`; upgrade, or remove the plugin meanwhile.
+- **Before 0.5.0: nothing installs after a Harness upgrade — `dsh plugin add` is rejected with `incompatible-version` (and an already-installed older version quietly disappears).** Harness `0.2.0` introduced a peer-version gate: `dsh plugin add` checks every `@deepseek-ai/dsh-*` peer range in the manifest and refuses the install when it does not match the running Harness. An older version already in the profile is skipped at startup instead — the launch log lists a skipped bundle, the plugin does not load, and `--dump-config` shows no `notify-menubar`. `0.5.0` aligns the peer ranges to `0.2.1-alpha.2`; upgrade the plugin, or admit the old version explicitly with the `dsh plugin allow-version` command the error prints.
 - **`dsh plugin add` reports 404 right after a release.** A brand-new version takes a few minutes to appear on the registry read path; the tarball, `dist-tags`, and the search index usually resolve first. Retry shortly.
 - **Installing through a mirror fails with `ERR_PNPM_FETCH_404`.** Mirrors such as npmmirror sync new versions on their own schedule. Add `--registry=https://registry.npmjs.org` to that one command, or wait for the mirror.
 - **pnpm refuses or prompts for a just-released version.** That is pnpm's `minimumReleaseAge` delay. Allow the package (pnpm records it under `minimumReleaseAgeExclude`) or wait out the window.

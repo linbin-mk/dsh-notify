@@ -1,5 +1,6 @@
 import { constants, accessSync } from 'node:fs'
 import { spawn } from 'node:child_process'
+import { isIP } from 'node:net'
 import { fileURLToPath } from 'node:url'
 import z from '@deepseek-ai/schemastery'
 
@@ -29,9 +30,21 @@ function delay(milliseconds) {
   return new Promise(resolve => { setTimeout(resolve, milliseconds) })
 }
 
-/** Resolve the loopback origin used by this Harness process's Web client. */
+/**
+ * Resolve the Web origin the native helper matches open Chrome tabs against.
+ * A deployment that advertises its own root (TLS termination or a reverse
+ * proxy) is what the browser is actually sent to, so it wins over the bind
+ * address. Otherwise the origin is composed from the bound listener, which
+ * Harness may run over HTTPS and/or on a non-loopback literal.
+ */
 export function webClientOrigin(ctx) {
-  return `http://127.0.0.1:${String(ctx.webServer.port)}`
+  const advertised = ctx.get('webStartup')?.publicUrl
+  if (advertised !== undefined) return advertised
+  const { protocol, host, port } = ctx.webServer
+  // The bind host is one concrete IP literal, and no URL can carry an
+  // interface zone id, so the zone is dropped before the IPv6 brackets.
+  const bare = host.split('%')[0]
+  return `${protocol}//${isIP(bare) === 6 ? `[${bare}]` : bare}:${String(port)}`
 }
 
 /** Launch the package-owned AppKit process and expose its count protocol. */
