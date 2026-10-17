@@ -86,9 +86,7 @@ window.__ModuleLoader__.load({
 
     function statusText(snapshot, enabled, t) {
       if (snapshot.status === 'loading') return t('loading')
-      // Memory mode keeps a remote browser's writes process-local, so it must
-      // not present the form as a persisted setting.
-      if (snapshot.status !== 'ready' || snapshot.mode === 'memory') return t('unavailable')
+      if (snapshot.status !== 'ready') return t('unavailable')
       if (!snapshot.writable) return t('readOnly')
       return enabled ? t('enabled') : t('disabled')
     }
@@ -160,7 +158,10 @@ window.__ModuleLoader__.load({
       const approvalMarkers = snapshot.value?.approvalMarkers !== false
       const sweep = snapshot.value?.sweep !== false
       const [saving, setSaving] = React.useState(false)
-      const editable = snapshot.status === 'ready' && snapshot.writable && snapshot.mode === 'host'
+      // DSH 0.2.1-alpha.3 removed the memory/host persistence `mode` from the
+      // ConfigForm snapshot: a ready, writable form is the only editable
+      // posture, so the page keys editability on status and writability alone.
+      const editable = snapshot.status === 'ready' && snapshot.writable
       const disabled = saving || !editable
       const save = update => {
         if (disabled) return

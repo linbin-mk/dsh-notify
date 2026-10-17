@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Menu Bar Activity Indicator",
+    "description": "macOS menu bar activity indicator for DeepSeek Harness: running Agent count, pending question and approval markers, optional sweeping highlight, and click-to-focus on the matching browser tab."
+  }
+}

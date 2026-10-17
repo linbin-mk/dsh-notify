@@ -17,12 +17,13 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 - **Sweeping attention effect** — a highlight sweeps over the whale mark and the numbers while a subscribed event is pending. It is clipped to the icon and the glyphs instead of covering the whole status item.
 - **Click to focus** — clicking the item brings the Google Chrome tab already showing this Harness process to the front. It never opens a new tab.
 - **Settings without a restart** — the indicator, both subscriptions, and the sweep can be toggled live from the built-in Settings panel.
+- **Display metadata in the plugin lists** — the package ships `icon.png` (a whale with an activity-signal badge on a transparent background) plus `locale/en.json` and `locale/zh.json` with `meta.title`/`meta.description`. The Harness Plugin Manager, bundle details and the **Settings → Plugins** inventory read them **without activating the plugin**, so the row shows a localized name and capability description with its own icon instead of package-name fallback text and generic artwork.
 
 ## Requirements
 
 - macOS 13 or later, on Apple silicon or Intel
 - Node.js `^22.19` or `>=24`
-- DeepSeek Harness `0.2.1-alpha.2` or a compatible release, with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
+- DeepSeek Harness `0.2.1-alpha.3` or a compatible `0.2.1` prerelease (verified on `0.2.1-rc.2`), with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
 - Xcode Command Line Tools when building from this checkout; packed artifacts contain the universal native helper
 
 ## Install
@@ -40,7 +41,7 @@ To install a locally built tarball instead:
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.5.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.6.0.tgz
 ```
 
 Either artifact already contains the universal native helper, so no Xcode installation is needed. Installing from a Git checkout does need Xcode Command Line Tools: pnpm runs the package's `prepare` script, which compiles that helper, and blocks it until the key it prints is allowlisted under `allowBuilds` in the profile's `pnpm-workspace.yaml`.
@@ -71,11 +72,15 @@ The indicator counts the complete Agent activity interval, including consecutive
 ## Build and verify
 
 ```sh
-npm test
+npm test                                         # build the helper and run test/plugin.test.js + test/display-metadata.test.js
+node --test test/display-metadata.test.js        # plugin-list display metadata only
 file native/dsh-notify-menubar
 ```
 
-The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. The tests cover Agent counting, live enable/disable ownership, the Host half's volatile Config references and their `loader/volatile-update` follow-up, Web origin composition from the listener protocol and bind address (IPv6 bracketed) with an advertised root taking precedence, the Client bundle's reads and switch writes through `ctx.configForms`, the package-name ownership of its injected stylesheet, and an AppKit probe that loads the packaged whale SVG without creating a status item.
+The build compiles the AppKit helper for `arm64` and `x86_64`, then combines both slices into one universal executable. `npm test` covers two suites:
+
+- `test/plugin.test.js` — Agent counting, live enable/disable ownership, the Host half's volatile Config references and their `loader/volatile-update` follow-up, Web origin composition from the listener protocol and bind address (IPv6 bracketed) with an advertised root taking precedence, the Client bundle's reads and switch writes through `ctx.configForms`, the package-name ownership of its injected stylesheet, and an AppKit probe that loads the packaged whale SVG without creating a status item. The Settings page now keys editability on the configuration-form snapshot's `status` and `writable` alone: upstream removed `ConfigFormSnapshot.mode` in Harness `0.2.1-alpha.3`, so a `ready` and writable snapshot is editable and no longer has to report `mode === 'host'`.
+- `test/display-metadata.test.js` — checks the plugin-list display metadata by the same resolution rules as `readPluginMeta` (`dsh-app-boot`): `@linbin-mk/dsh-notify/locale/en.json` and its sibling `locale/zh.json` both resolve through the package's self-referencing `exports`, use language ids as filenames, and carry non-empty, mutually distinct Chinese and English `meta.title`/`meta.description`; `./icon` resolves to a square PNG image no larger than 256 KiB (`icon.png`: a whale with an activity-signal badge on a transparent background); and `package.json`'s `files` and `exports` both carry `icon.png` and `locale/*.json` while the `"."`, `"./client"`, and `"./cordis.patch.yml"` runtime exports stay unchanged. `readPluginMeta` goes through Node's ESM resolver without executing plugin code, so a missing export, a malformed dictionary, or a resource left out of the packed `files` only degrades the row to package-name text and generic artwork — there is no runtime error.
 
 ## Troubleshooting
 
@@ -99,4 +104,4 @@ Disabling the indicator closes and awaits the native helper; disabling a subscri
 
 MIT — see `LICENSE`.
 
-The whale outline in `native/whale.svg` is DeepSeek Harness's MIT-licensed `FishLogo` asset, reproduced unmodified; `NOTICE` carries the upstream copyright and license text. As a macOS template image it appears black in the light menu bar and automatically changes contrast in dark appearances.
+The whale outline in `native/whale.svg` is DeepSeek Harness's MIT-licensed `FishLogo` asset, reproduced unmodified; `NOTICE` carries the upstream copyright and license text. As a macOS template image it appears black in the light menu bar and automatically changes contrast in dark appearances. The plugin-list icon `icon.png` is original artwork made for this plugin (a whale with an activity-signal badge on a transparent background) and contains no third-party material; the MIT attribution in `NOTICE` covers only `native/whale.svg`.

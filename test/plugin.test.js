@@ -393,10 +393,12 @@ test('the injected stylesheet is tagged with the package name Harness keys owner
 
 test('the client bundle registers localized event subscription checkboxes and a sweep switch', async () => {
   const writes = []
+  // Shaped like DSH 0.2.1-alpha.3+ ConfigFormSnapshot: the memory/host `mode`
+  // field is gone, and a ready + writable form must still enable every control.
   const form = {
     getSnapshot: () => ({
       status: 'ready', value: { enabled: true, questionMarkers: true, approvalMarkers: true, sweep: true }, writable: true,
-      base: { enabled: true, questionMarkers: true, approvalMarkers: true, sweep: true }, user: undefined, revision: 0, mode: 'host',
+      base: { enabled: true, questionMarkers: true, approvalMarkers: true, sweep: true }, user: undefined, revision: 0,
     }),
     subscribe: () => () => {},
     set: async (field, value) => { writes.push([field, value]); return true },
@@ -436,12 +438,12 @@ test('the client bundle registers localized event subscription checkboxes and a 
   ])
 })
 
-test('the settings page disables every control while the form is unavailable or process-local', async () => {
+test('the settings page disables every control while the form is unavailable or read-only', async () => {
   const writes = []
   const form = {
     getSnapshot: () => ({
       status: 'unavailable', value: undefined, base: undefined, user: undefined,
-      revision: undefined, writable: false, mode: 'memory',
+      revision: undefined, writable: false,
     }),
     subscribe: () => () => {},
     set: async (field, value) => { writes.push([field, value]); return false },
@@ -458,6 +460,29 @@ test('the settings page disables every control while the form is unavailable or 
   checkboxes[0].props.onChange()
   checkboxes[1].props.onChange()
   toggles[1].props.onClick()
+  await Promise.resolve()
+  assert.deepEqual(writes, [])
+})
+
+test('the settings page reports a read-only Host document without pretending to save', async () => {
+  const writes = []
+  const form = {
+    getSnapshot: () => ({
+      status: 'ready', value: { enabled: true, questionMarkers: true, approvalMarkers: true, sweep: true }, writable: false,
+      base: { enabled: true, questionMarkers: true, approvalMarkers: true, sweep: true }, user: undefined, revision: 1,
+    }),
+    subscribe: () => () => {},
+    set: async (field, value) => { writes.push([field, value]); return false },
+  }
+  const { plugin } = await loadClientBundle()
+  const { ctx, captured } = fakeClientContext(form)
+  plugin.apply(ctx)
+
+  const { cards, toggles, checkboxes } = renderNotifySection(captured, form.getSnapshot())
+  assert.equal(cards[0].props.children[0].props.children[2].props.children, 'readOnly')
+  assert.deepEqual(Array.from(toggles, toggle => toggle.props.disabled), [true, true])
+  assert.deepEqual(Array.from(checkboxes, checkbox => checkbox.props.disabled), [true, true])
+  toggles[0].props.onClick()
   await Promise.resolve()
   assert.deepEqual(writes, [])
 })
