@@ -8,7 +8,26 @@
 [![Node](https://img.shields.io/node/v/@linbin-mk/dsh-notify)](package.json)
 [![平台](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey)](#要求)
 
-`dsh-notify` 是一个适用于 macOS 的纯第三方 DeepSeek Harness 插件。它在系统菜单栏中添加一个状态项：Harness 鲸鱼标志及当前状态为 `running` 的 Agent 数量。计数为零时，菜单栏只显示鲸鱼。当已订阅事件等待用户处理时，数字改为这些事件的总数，字母用于标识事件类型：`Q` 表示提问，`S` 表示审批；因此 `2-QS` 表示各有一个提问和审批等待处理。两类订阅及扫光强化提示默认开启。点击状态项会切换到此 Harness 进程已打开的 Google Chrome 标签页，绝不会新建标签页。它的 Web Client 端会在内置设置面板中添加“通知”页面，用户无需重启 Harness 即可管理状态项及事件订阅。
+`dsh-notify` 是一个纯第三方的 DeepSeek Harness macOS 插件。它在系统菜单栏常驻一个鲸鱼状态项：鲸鱼后显示当前状态为 `running` 的 Agent 数量，计数为零时只显示鲸鱼。当已订阅的事件等待用户处理时，数字改为这些事件的总数，并用字母标识事件类型：`Q` 表示提问，`S` 表示审批，因此 `2-QS` 表示各有一个提问和审批等待处理。点击状态项会切换到此 Harness 进程已打开的 Google Chrome 标签页，绝不会新建标签页。Web Client 端还会在内置设置面板中加入“通知”页面，状态项、两类事件订阅和扫光提示都可以在不重启 Harness 的情况下管理。
+
+## 截图
+
+**菜单栏状态项**（与随包辅助程序相同的 AppKit 绘制逻辑）：
+
+| 场景 | 菜单栏显示 |
+| --- | --- |
+| 空闲：没有 Agent 运行 | <img src="https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/menubar-idle.png" width="360" alt="空闲时菜单栏只显示鲸鱼"> |
+| 运行中：3 个 Agent | <img src="https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/menubar-running.png" width="360" alt="菜单栏显示鲸鱼和数字 3"> |
+| 待处理：1 个提问 + 1 个审批 | <img src="https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/menubar-pending.png" width="360" alt="菜单栏显示鲸鱼和 2-QS"> |
+| 扫光：有事件等待处理 | <img src="https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/menubar-sweep.gif" width="360" alt="扫光掠过鲸鱼和数字"> |
+
+**设置 → 通知**：状态项、事件订阅和扫光都可以即时开关，无需重启 Harness。
+
+![设置面板中的通知页](https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/settings-notify-zh.png)
+
+**设置 → 插件**：插件清单会直接显示图标、名称和能力说明。
+
+![插件清单中的菜单栏活动指示器](https://raw.githubusercontent.com/linbin-mk/dsh-notify/main/docs/screenshots/plugin-row-zh.png)
 
 ## 功能
 
@@ -17,7 +36,7 @@
 - **扫光强化提示** —— 有已订阅事件等待处理时，一道扫光会掠过鲸鱼图标和旁边的数字；高光只落在图标与字形上，不会铺满整个状态项。
 - **点击聚焦** —— 点击状态项会把已打开此 Harness 进程的 Google Chrome 标签页切到前台，绝不会新建标签页。
 - **免重启改设置** —— 状态项、两类订阅和扫光都可在内置设置面板中实时开关。
-- **插件清单里的展示信息** —— 包内自带 `icon.png`（鲸鱼 + 活动状态徽标，透明背景）与 `locale/en.json`、`locale/zh.json` 两份 `meta.title`/`meta.description`。Harness 的插件管理器、bundle 详情与**设置 → 插件**清单在**不激活插件**的前提下读取它们，因此插件行显示的是带图标的中英文名称与能力说明，而不是包名回退文本和默认占位图。
+- **插件清单里的展示信息** —— 包内自带 `icon.png`（白底圆角方块上的鲸鱼与铃铛通知徽标）与 `locale/en.json`、`locale/zh.json` 两份 `meta.title`/`meta.description`。Harness 的插件管理器、bundle 详情与**设置 → 插件**清单在**不激活插件**的前提下读取它们，因此插件行显示的是带图标的中英文名称与能力说明，而不是包名回退文本和默认占位图。
 
 ## 要求
 
@@ -41,7 +60,7 @@ dsh --profile web-notify
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.6.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.6.1.tgz
 ```
 
 两种产物都已包含通用原生辅助程序，无需安装 Xcode。如果改为从 Git 检出安装，则需要 Xcode Command Line Tools：pnpm 会运行包的 `prepare` 脚本编译该辅助程序并阻止执行，直到你把 pnpm 打印的那个键加入 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
@@ -80,7 +99,7 @@ file native/dsh-notify-menubar
 构建过程会分别为 `arm64` 和 `x86_64` 编译 AppKit 辅助程序，再将两个架构合并为一个通用可执行文件。`npm test` 覆盖两部分：
 
 - `test/plugin.test.js` —— Agent 计数、运行期间的启用和停用行为、Host 半侧实时配置引用与 `loader/volatile-update` 的联动、Web 源按监听协议与绑定地址组装（IPv6 加方括号）并以广告地址优先、Client 插件经 `ctx.configForms` 读取配置并写回开关、注入样式表的包名归属，以及加载随包提供的鲸鱼 SVG 且不创建状态项的 AppKit 探测。设置页的可编辑性现在只看配置表单快照的 `status` 与 `writable`：上游在 Harness `0.2.1-alpha.3` 移除了 `ConfigFormSnapshot.mode`，快照为 `ready` 且可写即视为可编辑，不再要求 `mode === 'host'`。
-- `test/display-metadata.test.js` —— 按 `readPluginMeta`（`dsh-app-boot`）的同一套解析规则校验插件清单展示信息：`@linbin-mk/dsh-notify/locale/en.json` 与同目录的 `locale/zh.json` 都能经包自引用 `exports` 解析、文件名是语言 id、`meta.title`/`meta.description` 非空且中英文不同；`./icon` 解析到不超过 256 KiB 的方形 PNG 图标（`icon.png`：鲸鱼 + 活动状态徽标，透明背景）；`package.json` 的 `files` 与 `exports` 同时携带 `icon.png` 与 `locale/*.json`，而 `"."`、`"./client"`、`"./cordis.patch.yml"` 三个运行时导出保持不变。`readPluginMeta` 走 Node 的 ESM 解析器且不执行插件代码，所以缺少导出、字典格式错误或资源没被 `files` 带进 tarball 时，插件行只会静默退化为包名文本和默认占位图，不会在运行时报错。
+- `test/display-metadata.test.js` —— 按 `readPluginMeta`（`dsh-app-boot`）的同一套解析规则校验插件清单展示信息：`@linbin-mk/dsh-notify/locale/en.json` 与同目录的 `locale/zh.json` 都能经包自引用 `exports` 解析、文件名是语言 id、`meta.title`/`meta.description` 非空且中英文不同；`./icon` 解析到不超过 256 KiB 的方形 PNG 图标（`icon.png`：白底圆角方块上的鲸鱼与铃铛通知徽标）；`package.json` 的 `files` 与 `exports` 同时携带 `icon.png` 与 `locale/*.json`，而 `"."`、`"./client"`、`"./cordis.patch.yml"` 三个运行时导出保持不变。`readPluginMeta` 走 Node 的 ESM 解析器且不执行插件代码，所以缺少导出、字典格式错误或资源没被 `files` 带进 tarball 时，插件行只会静默退化为包名文本和默认占位图，不会在运行时报错。
 
 ## 常见问题
 
@@ -104,4 +123,4 @@ file native/dsh-notify-menubar
 
 MIT —— 详见 `LICENSE`。
 
-`native/whale.svg` 中的鲸鱼轮廓复制自采用 MIT 许可证的 DeepSeek Harness `FishLogo` 资源，未作修改；上游版权与许可证文本见 `NOTICE`。它作为 macOS 模板图像时，在浅色菜单栏中显示为黑色，并在深色外观下自动调整对比度。插件清单图标 `icon.png` 是本插件专用的原创图形（鲸鱼 + 活动状态徽标，透明背景），不包含第三方素材；`NOTICE` 中的 MIT 归属只覆盖 `native/whale.svg`。
+`native/whale.svg` 中的鲸鱼轮廓复制自采用 MIT 许可证的 DeepSeek Harness `FishLogo` 资源，未作修改；上游版权与许可证文本见 `NOTICE`。它作为 macOS 模板图像时，在浅色菜单栏中显示为黑色，并在深色外观下自动调整对比度。插件清单图标 `icon.png` 是本插件专用的原创图形（白底圆角方块上的鲸鱼与铃铛通知徽标），其中的鲸鱼形象取自 DeepSeek 鲸鱼标识；`NOTICE` 中的 MIT 归属覆盖 `native/whale.svg` 与图标中的鲸鱼形象。

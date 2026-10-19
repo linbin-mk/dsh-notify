@@ -14,9 +14,11 @@ data is byte-for-byte identical to the upstream FISH_LOGO_PATH constant, and its
 viewBox matches FISH_LOGO_VIEWBOX (23.16 x 17.04). dsh-notify uses it unmodified
 as a macOS template image for its menu bar status item.
 
-The plugin-list icon in icon.png is original artwork made for this plugin (a whale
-with an activity-signal badge on a transparent background). It reproduces no part
-of the FishLogo asset, so the MIT attribution below covers only native/whale.svg.
+The plugin-list icon in icon.png is original artwork made for this plugin: a
+DeepSeek whale motif with a bell notification badge on a white rounded-square
+tile. Its whale silhouette is an independent redrawing inspired by the FishLogo
+asset rather than a copy of its SVG path data. The MIT attribution below covers
+native/whale.svg and the DeepSeek whale design that icon.png adapts.
 
 MIT License
 
