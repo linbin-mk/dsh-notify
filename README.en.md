@@ -42,7 +42,8 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 
 - macOS 13 or later, on Apple silicon or Intel
 - Node.js `^22.19` or `>=24`
-- DeepSeek Harness `0.2.1-alpha.3` or a compatible `0.2.1` prerelease (verified on `0.2.1-rc.2`), with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
+- DeepSeek Harness `0.2.1-rc.3` or a compatible `0.2.1` prerelease (verified on `0.2.1-rc.3`, source checkout `22ddee3792`), with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
+- Peer baseline `0.2.1-rc.3`: a profile still on the `0.2.1` alpha line must upgrade Harness to `0.2.1-rc.3` or newer first; otherwise `dsh plugin add` rejects the plugin as incompatible
 - Xcode Command Line Tools when building from this checkout; packed artifacts contain the universal native helper
 
 ## Install
@@ -60,7 +61,7 @@ To install a locally built tarball instead:
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.6.1.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.7.0.tgz
 ```
 
 Either artifact already contains the universal native helper, so no Xcode installation is needed. Installing from a Git checkout does need Xcode Command Line Tools: pnpm runs the package's `prepare` script, which compiles that helper, and blocks it until the key it prints is allowlisted under `allowBuilds` in the profile's `pnpm-workspace.yaml`.

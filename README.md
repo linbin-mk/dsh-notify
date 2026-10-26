@@ -42,7 +42,8 @@
 
 - Apple 芯片或 Intel 处理器的 macOS 13 或更高版本
 - Node.js `^22.19` 或 `>=24`
-- DeepSeek Harness `0.2.1-alpha.3` 或兼容的 `0.2.1` 预发布版本（已在 `0.2.1-rc.2` 上验证），以及提供 `ctx.agents`、`ctx.webServer` 和设置服务的 Web profile
+- DeepSeek Harness `0.2.1-rc.3` 或兼容的 `0.2.1` 预发布版本（已在 `0.2.1-rc.3` 上验证，源码检出 `22ddee3792`），以及提供 `ctx.agents`、`ctx.webServer` 和设置服务的 Web profile
+- peer 基线为 `0.2.1-rc.3`：仍停留在 `0.2.1` alpha 线的 profile 需要先把 Harness 升级到 `0.2.1-rc.3` 或更新版本，否则 `dsh plugin add` 会按不兼容版本拒绝安装
 - 从本检出目录构建时需要 Xcode Command Line Tools；打包产物已包含通用原生辅助程序
 
 ## 安装
@@ -60,7 +61,7 @@ dsh --profile web-notify
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.6.1.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.7.0.tgz
 ```
 
 两种产物都已包含通用原生辅助程序，无需安装 Xcode。如果改为从 Git 检出安装，则需要 Xcode Command Line Tools：pnpm 会运行包的 `prepare` 脚本编译该辅助程序并阻止执行，直到你把 pnpm 打印的那个键加入 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
