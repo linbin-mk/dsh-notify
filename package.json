@@ -1,6 +1,6 @@
 {
   "name": "@linbin-mk/dsh-notify",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Third-party macOS menu bar activity indicator for DeepSeek Harness",
   "type": "module",
   "main": "index.js",
@@ -38,7 +38,10 @@
   },
   "dsh": {
     "bundle": {
-      "patch": "./cordis.patch.yml"
+      "patch": "./cordis.patch.yml",
+      "platforms": [
+        "darwin"
+      ]
     },
     "client": {
       "platform": "web",
@@ -52,19 +55,19 @@
     }
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.5"
+    "@deepseek-ai/schemastery": "^3.19.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.5",
-    "@deepseek-ai/dsh-agent": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-api-remotes": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-client-connection": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-client-locale": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-client-ui-renderer": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-host-webserver": "^0.2.1-rc.3",
-    "@deepseek-ai/dsh-settings": "^0.2.1-rc.3"
+    "@deepseek-ai/cordis": "^4.1.0",
+    "@deepseek-ai/dsh-agent": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-api-remotes": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-connection": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-locale": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-renderer": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-host-webserver": "^0.2.2-rc.1",
+    "@deepseek-ai/dsh-settings": "^0.2.2-rc.1"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {

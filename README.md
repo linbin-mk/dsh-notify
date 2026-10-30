@@ -42,8 +42,9 @@
 
 - Apple 芯片或 Intel 处理器的 macOS 13 或更高版本
 - Node.js `^22.19` 或 `>=24`
-- DeepSeek Harness `0.2.1-rc.3` 或兼容的 `0.2.1` 预发布版本（已在 `0.2.1-rc.3` 上验证，源码检出 `22ddee3792`），以及提供 `ctx.agents`、`ctx.webServer` 和设置服务的 Web profile
-- peer 基线为 `0.2.1-rc.3`：仍停留在 `0.2.1` alpha 线的 profile 需要先把 Harness 升级到 `0.2.1-rc.3` 或更新版本，否则 `dsh plugin add` 会按不兼容版本拒绝安装
+- DeepSeek Harness `0.2.2-rc.1` 或兼容的 `0.2.2` 版本（已在 `0.2.2-rc.1` 上验证，源码检出 `fcc0ad4621`），以及提供 `ctx.agents`、`ctx.webServer` 和设置服务的 Web profile
+- peer 基线为 `0.2.2-rc.1`：早于 `rc.1` 的 `0.2.2` 预发布版本（`alpha.2`、`alpha.3`）与 `0.2.1` 线（含 `rc.4`、`rc.5`）都需要先把 Harness 升级到 `0.2.2-rc.1` 或更新版本，否则 `dsh plugin add` 会按不兼容版本拒绝安装
+- 仅支持 macOS：包同时声明 `os: ["darwin"]` 与 `dsh.bundle.platforms: ["darwin"]`。若 profile 被复制到其它操作系统，Harness `0.2.2` 会在组合阶段带平台原因跳过该 bundle，而不是让启动失败
 - 从本检出目录构建时需要 Xcode Command Line Tools；打包产物已包含通用原生辅助程序
 
 ## 安装
@@ -61,7 +62,7 @@ dsh --profile web-notify
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.7.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.8.0.tgz
 ```
 
 两种产物都已包含通用原生辅助程序，无需安装 Xcode。如果改为从 Git 检出安装，则需要 Xcode Command Line Tools：pnpm 会运行包的 `prepare` 脚本编译该辅助程序并阻止执行，直到你把 pnpm 打印的那个键加入 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
@@ -106,6 +107,7 @@ file native/dsh-notify-menubar
 
 - **0.2.2 之前：Web GUI 启动失败，页面显示 `Failed to load plugins`。** `0.2.0` 与 `0.2.1` 把客户端 bundle 注册成了短名 `dsh-notify`，而 Harness 按**包名**（`@linbin-mk/dsh-notify`）索引客户端模块表，两者不一致会让浏览器侧整个 GUI 起不来——Host 半侧与菜单栏此时仍然正常，所以 `--dump-config` 看起来没问题。已在 `0.2.2` 修复；升级即可，或先移除插件。
 - **0.5.0 之前：升级 Harness 后装不上，`dsh plugin add` 被拒并报 `incompatible-version`（已装的旧版本则静默消失）。** Harness `0.2.0` 起新增了 peer 版本门禁：`dsh plugin add` 会逐个校验 manifest 里的 `@deepseek-ai/dsh-*` peer 范围，与当前 Harness 版本不符时直接拒绝安装；已经在 profile 里的旧版本改为在启动时被跳过（启动日志里是一条 skipped bundle，插件不加载，`--dump-config` 里也看不到 `notify-menubar`）。`0.5.0` 已把 peer 范围对齐到 `0.2.1-alpha.2`；升级插件即可，或者按报错提示用 `dsh plugin allow-version` 为旧版本单独放行。
+- **0.8.0 起只支持 Harness `0.2.2-rc.1` 及更新的 `0.2.2` 版本：更早的 `0.2.2` 预发布版或 `0.2.1` 线上安装会报 `incompatible-version`。** `0.8.0` 的 peer 基线是 `^0.2.2-rc.1`，仍停留在 `0.2.2-alpha.2`/`alpha.3` 或 `0.2.1` 线（含 `rc.4`、`rc.5`）的 profile 需要先把 Harness 升级到 `0.2.2-rc.1` 或更新版本，否则 `dsh plugin add` 会按不兼容版本拒绝安装；如果 profile 必须留在 `0.2.1` 线，请继续使用面向该线的 `0.7.x`。
 - **刚发版后 `dsh plugin add` 报 404。** 全新版本在 registry 读路径上需要几分钟才可见；tarball、`dist-tags` 和搜索索引通常会先可用。稍后重试即可。
 - **通过镜像安装报 `ERR_PNPM_FETCH_404`。** npmmirror 等镜像同步新版本有自己的节奏。给这条命令加上 `--registry=https://registry.npmjs.org`，或等镜像同步。
 - **pnpm 拒绝或询问刚发布的版本。** 这是 pnpm 的 `minimumReleaseAge` 延迟保护。放行该包（pnpm 会记录到 `minimumReleaseAgeExclude`）或等过这个时间窗口。

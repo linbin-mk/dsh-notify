@@ -367,6 +367,16 @@ test('the browser half addresses the entry id declared by the bundle patch', asy
   assert.ok(source.includes(`'${ENTRY_ID}'`), 'the client bundle names the same settings entry id')
 })
 
+test('the bundle declares macOS-only Host platform support', async () => {
+  const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+  // npm refuses installation on another operating system; the Harness launcher
+  // additionally skips the layer with a platform reason instead of failing to
+  // compose a profile that already contains the dependency.
+  assert.deepEqual(manifest.os, ['darwin'])
+  assert.deepEqual(manifest.dsh?.bundle?.platforms, ['darwin'])
+  assert.equal(manifest.dsh?.bundle?.patch, './cordis.patch.yml')
+})
+
 test('the injected stylesheet is tagged with the package name Harness keys ownership by', async () => {
   const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
   const injected = []
