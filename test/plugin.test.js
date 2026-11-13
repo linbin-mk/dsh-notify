@@ -294,12 +294,13 @@ test('apply follows loader volatile updates and suppresses the generated setting
 })
 
 /** Materialize the browser half's registered bundle with a minimal React shim. */
-async function loadClientBundle() {
+async function loadClientBundle(document) {
   const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
   let bundle
   const context = vm.createContext({
     window: { __ModuleLoader__: { load: value => { bundle = value } } },
     Promise,
+    ...(document === undefined ? {} : { document }),
   })
   vm.runInContext(source, context)
   const jsx = (type, props) => ({ type, props })
@@ -311,9 +312,9 @@ async function loadClientBundle() {
   return { bundle, plugin, source }
 }
 
-/** Browser context recording locale rows, the requested config form, and the slot registration. */
+/** Browser context recording locale rows, the requested config form, disposers, and the slot registration. */
 function fakeClientContext(form) {
-  const captured = { registration: undefined, entryId: undefined, localeRows: [] }
+  const captured = { registration: undefined, entryId: undefined, localeRows: [], disposers: [] }
   const ctx = {
     locale: {
       bind: () => key => key,
@@ -328,7 +329,10 @@ function fakeClientContext(form) {
         return form
       },
     },
-    effect: setup => setup(),
+    effect: setup => {
+      captured.disposers.push(setup())
+      return () => {}
+    },
     slots: {
       inject: (_name, setup) => setup(),
       register: (options, component) => {
@@ -377,28 +381,64 @@ test('the bundle declares macOS-only Host platform support', async () => {
   assert.equal(manifest.dsh?.bundle?.patch, './cordis.patch.yml')
 })
 
-test('the injected stylesheet is tagged with the package name Harness keys ownership by', async () => {
-  const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
-  const injected = []
-  const document = {
-    querySelector: () => null,
-    createElement: () => ({ dataset: {}, textContent: '' }),
-    head: { appendChild: element => { injected.push(element) } },
+/** Minimal document recording the style elements the browser half installs. */
+function fakeDocument() {
+  const head = {
+    children: [],
+    appendChild(element) { this.children.push(element) },
   }
-  const source = await readFile(fileURLToPath(new URL('../client.js', import.meta.url)), 'utf8')
-  let bundle
-  const context = vm.createContext({ window: { __ModuleLoader__: { load: value => { bundle = value } } }, Promise, document })
-  vm.runInContext(source, context)
-  bundle.factory(specifier => {
-    if (specifier === 'react/jsx-runtime') return { jsx: () => {}, jsxs: () => {} }
-    if (specifier === 'react') return {}
-    throw new Error(`unexpected module request: ${specifier}`)
-  })
-  assert.equal(injected.length, 1)
+  return {
+    head,
+    createElement(tagName) {
+      const element = {
+        tagName,
+        dataset: {},
+        textContent: '',
+        remove() {
+          const index = head.children.indexOf(element)
+          if (index >= 0) head.children.splice(index, 1)
+        },
+      }
+      return element
+    },
+  }
+}
+
+test('the client bundle registers without touching the document', async () => {
+  const document = fakeDocument()
+  await loadClientBundle(document)
+  // Registration only queues the factory; the module-styles contract keeps
+  // style installation out of module evaluation and with the plugin lifecycle.
+  assert.equal(document.head.children.length, 0)
+})
+
+test('the settings stylesheet follows module style ownership and the plugin lifecycle', async () => {
+  const manifest = JSON.parse(await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+  const document = fakeDocument()
+  const { plugin } = await loadClientBundle(document)
+  const form = {
+    getSnapshot: () => ({ status: 'ready', value: {}, writable: true }),
+    subscribe: () => () => {},
+    set: async () => true,
+  }
+  const { ctx, captured } = fakeClientContext(form)
+  plugin.apply(ctx)
+
+  assert.equal(document.head.children.length, 1)
+  const [tag] = document.head.children
   // A short name here leaves the tag unowned, so it survives plugin unload and
   // HMR can never replace it; Harness keys ownership by the package name.
-  assert.equal(injected[0].dataset.plugin, manifest.name)
-  assert.equal(injected[0].dataset.pluginCss, `${manifest.name}/client.css`)
+  assert.equal(tag.dataset.plugin, manifest.name)
+  // Module styles are additionally keyed by their path inside the package; the
+  // retired `data-plugin-css` attribute must not come back.
+  assert.equal(tag.dataset.path, 'client.css')
+  assert.equal(tag.dataset.pluginCss, undefined)
+  assert.match(tag.textContent, /\.dshNotifySection\{/)
+
+  // The Loader no longer removes style tags it did not install, so the plugin
+  // must drop its own element when the fiber is disposed.
+  for (const dispose of captured.disposers) dispose()
+  assert.equal(document.head.children.length, 0)
 })
 
 test('the client bundle registers localized event subscription checkboxes and a sweep switch', async () => {

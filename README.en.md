@@ -42,8 +42,8 @@ English | [简体中文](https://github.com/linbin-mk/dsh-notify/blob/main/READM
 
 - macOS 13 or later, on Apple silicon or Intel
 - Node.js `^22.19` or `>=24`
-- DeepSeek Harness `0.2.2-rc.1` or a compatible `0.2.2` release (verified on `0.2.2-rc.1`, source checkout `fcc0ad4621`), with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
-- Peer baseline `0.2.2-rc.1`: a profile still on an earlier `0.2.2` prerelease (`alpha.2`, `alpha.3`) or on the `0.2.1` line (including `rc.4` and `rc.5`) must upgrade Harness to `0.2.2-rc.1` or newer first; otherwise `dsh plugin add` rejects the plugin as incompatible
+- DeepSeek Harness `0.2.2-rc.3` or a compatible `0.2.2` release (verified on `0.2.2-rc.3`, source checkout `39163dd30f`), with a Web profile that provides `ctx.agents`, `ctx.webServer`, and the settings service
+- Version baseline `0.2.2-rc.3` (`engines.dsh: ^0.2.2-rc.3`, with the peers aligned): a profile still on an earlier `0.2.2` prerelease (`rc.1`, `rc.2`, `alpha.2`, `alpha.3`) or on the `0.2.1` line (including `rc.4` and `rc.5`) must upgrade Harness to `0.2.2-rc.3` or newer first; otherwise `dsh plugin add` rejects the plugin as incompatible
 - macOS only: the package declares both `os: ["darwin"]` and `dsh.bundle.platforms: ["darwin"]`. A profile copied to another operating system skips this bundle with a platform reason under Harness `0.2.2` instead of failing to boot
 - Xcode Command Line Tools when building from this checkout; packed artifacts contain the universal native helper
 
@@ -62,7 +62,7 @@ To install a locally built tarball instead:
 ```sh
 npm test
 npm pack
-dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.8.0.tgz
+dsh plugin --profile web-notify add ./linbin-mk-dsh-notify-0.9.0.tgz
 ```
 
 Either artifact already contains the universal native helper, so no Xcode installation is needed. Installing from a Git checkout does need Xcode Command Line Tools: pnpm runs the package's `prepare` script, which compiles that helper, and blocks it until the key it prints is allowlisted under `allowBuilds` in the profile's `pnpm-workspace.yaml`.
@@ -107,7 +107,9 @@ The build compiles the AppKit helper for `arm64` and `x86_64`, then combines bot
 
 - **Before 0.2.2: the Web GUI shows `Failed to load plugins` and does not start.** Versions `0.2.0` and `0.2.1` register the client bundle under the short name `dsh-notify`, while Harness keys the client module table by **package name** (`@linbin-mk/dsh-notify`); the mismatch aborts the whole browser boot. The Host half and the menu bar keep working, so `--dump-config` looks fine. Fixed in `0.2.2`; upgrade, or remove the plugin meanwhile.
 - **Before 0.5.0: nothing installs after a Harness upgrade — `dsh plugin add` is rejected with `incompatible-version` (and an already-installed older version quietly disappears).** Harness `0.2.0` introduced a peer-version gate: `dsh plugin add` checks every `@deepseek-ai/dsh-*` peer range in the manifest and refuses the install when it does not match the running Harness. An older version already in the profile is skipped at startup instead — the launch log lists a skipped bundle, the plugin does not load, and `--dump-config` shows no `notify-menubar`. `0.5.0` aligns the peer ranges to `0.2.1-alpha.2`; upgrade the plugin, or admit the old version explicitly with the `dsh plugin allow-version` command the error prints.
-- **Since 0.8.0 only Harness `0.2.2-rc.1` and newer `0.2.2` releases are supported: installing on an earlier `0.2.2` prerelease or on the `0.2.1` line reports `incompatible-version`.** The `0.8.0` peer baseline is `^0.2.2-rc.1`, so a profile still on `0.2.2-alpha.2`/`alpha.3` or on the `0.2.1` line (including `rc.4` and `rc.5`) must upgrade Harness to `0.2.2-rc.1` or newer first; otherwise `dsh plugin add` rejects the plugin as incompatible. Stay on `0.7.x` when the profile must remain on the `0.2.1` line.
+- **Since 0.9.0 only Harness `0.2.2-rc.3` and newer `0.2.2` releases are supported: installing on an earlier `0.2.2` prerelease or on the `0.2.1` line reports `incompatible-version`.** `0.9.0` declares `engines.dsh: ^0.2.2-rc.3` as the version gate and raises every `@deepseek-ai/dsh-*` peer to `^0.2.2-rc.3`, so a profile still on `0.2.2-rc.1`/`rc.2`, `alpha.2`/`alpha.3`, or on the `0.2.1` line (including `rc.4` and `rc.5`) must upgrade Harness to `0.2.2-rc.3` or newer first; otherwise `dsh plugin add` rejects the plugin as incompatible. Stay on `0.7.x` for the `0.2.1` line and on `0.8.x` for `0.2.2-rc.1`/`rc.2`.
+- **Since 0.9.0 the settings stylesheet is removed with the plugin lifecycle.** The verified checkout (`0.2.2-rc.3`, source checkout `39163dd30f`) keys client module styles by package name plus path inside the package (`data-plugin` / `data-path`) and no longer removes `style` elements it did not install, so styles injected while the bundle registers outlive a disable or live replacement. This version installs the sheet inside `apply()` through `ctx.effect` and removes it with the plugin fiber, so a disabled plugin never keeps serving its rules.
+- **Since 0.8.0 only Harness `0.2.2-rc.1` and newer `0.2.2` releases are supported.** That release's peer baseline is `^0.2.2-rc.1`; use `0.8.x` where `0.2.2-rc.1`/`rc.2` must keep working instead of installing `0.9.0`.
 - **`dsh plugin add` reports 404 right after a release.** A brand-new version takes a few minutes to appear on the registry read path; the tarball, `dist-tags`, and the search index usually resolve first. Retry shortly.
 - **Installing through a mirror fails with `ERR_PNPM_FETCH_404`.** Mirrors such as npmmirror sync new versions on their own schedule. Add `--registry=https://registry.npmjs.org` to that one command, or wait for the mirror.
 - **pnpm refuses or prompts for a just-released version.** That is pnpm's `minimumReleaseAge` delay. Allow the package (pnpm records it under `minimumReleaseAgeExclude`) or wait out the window.

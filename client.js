@@ -7,14 +7,16 @@ window.__ModuleLoader__.load({
     const { jsx, jsxs } = require('react/jsx-runtime')
     const React = require('react')
 
-    // Harness keys injected style ownership by package name, exactly as it keys
-    // the client module table; a short name here would leave the tag unowned.
-    const styleId = '@linbin-mk/dsh-notify/client.css'
-    if (typeof document !== 'undefined' && document.querySelector(`style[data-plugin-css=${JSON.stringify(styleId)}]`) === null) {
-      const tag = document.createElement('style')
-      tag.dataset.plugin = '@linbin-mk/dsh-notify'
-      tag.dataset.pluginCss = styleId
-      tag.textContent = `
+    // Harness keys style ownership by package name, exactly as it keys the
+    // client module table; a short name here would leave the tag unowned. Under
+    // the module-styles contract one module stylesheet is also named by
+    // `data-path` within that package, and the retired `data-plugin-css`
+    // attribute no longer marks ownership. The Loader stops removing style tags
+    // it did not install, so this bundle creates its element inside `apply` and
+    // removes it with the plugin fiber instead of injecting it at registration.
+    const PACKAGE = '@linbin-mk/dsh-notify'
+    const STYLESHEET_PATH = 'client.css'
+    const stylesheetText = `
         .dshNotifySection{box-sizing:border-box;max-width:720px;color:var(--dsw-alias-label-primary);display:flex;flex-direction:column;gap:16px}
         .dshNotifyHeading{margin:0;font-size:18px;font-weight:600;line-height:28px}
         .dshNotifyIntro{margin:0;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:22px}
@@ -34,7 +36,16 @@ window.__ModuleLoader__.load({
         .dshNotifyKnob{display:block;width:20px;height:20px;border-radius:50%;background:var(--dsw-alias-label-primary-foreground);box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .15s ease}
         .dshNotifySwitch[aria-checked=true] .dshNotifyKnob{transform:translateX(20px)}
       `
+
+    /** Install this instance's settings stylesheet; the returned disposer removes it. */
+    function installStylesheet() {
+      if (typeof document === 'undefined') return () => {}
+      const tag = document.createElement('style')
+      tag.dataset.plugin = PACKAGE
+      tag.dataset.path = STYLESHEET_PATH
+      tag.textContent = stylesheetText
       document.head.appendChild(tag)
+      return () => { tag.remove() }
     }
 
     const dictionaries = {
@@ -201,6 +212,7 @@ window.__ModuleLoader__.load({
       const namespace = 'settings.dshNotify'
       const t = ctx.locale.bind(namespace)
       const form = ctx.configForms.get(ENTRY_ID)
+      ctx.effect(installStylesheet, 'dsh-notify: settings styles')
       ctx.effect(
         () => ctx.locale.register(namespace, dictionaries),
         'dsh-notify: settings dictionaries',
